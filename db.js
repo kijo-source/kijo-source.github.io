@@ -1,52 +1,62 @@
 /**
- * æ–‡åˆ›å·¥ä½œå° - æ•°æ®ç®¡ç†æ¨¡å—
- * ä½¿ç”¨ localStorage æŒä¹…åŒ–ï¼ŒæŒ‰æ—¥æœŸç»„ç»‡
+ * ÎÄ´´¹¤×÷Ì¨ v2 - Êı¾İ¹ÜÀíÄ£¿é
+ * localStorage ³Ö¾Ã»¯£¬°´ÈÕÆÚ×éÖ¯
  */
 
-const DB_KEY = 'wenchuang_workbench_v1';
+const DB_KEY_V2 = 'wenchuang_workbench_v2';
+const DB_KEY_V1 = 'wenchuang_workbench_v1';
 
-// é»˜è®¤åˆå§‹æ•°æ® - åŸºäºè¡Œä¸šè°ƒç ”é¢„å¡«
 const DEFAULT_DATA = {
   meta: {
-    version: '1.0',
+    version: '2.0',
     createdAt: new Date().toISOString(),
     lastUpdate: new Date().toISOString()
   },
   todos: {},        // { '2025-07-25': [{id, text, done, priority, category, createdAt}] }
-  inspirations: [], // ç§è‰æ–‡ç´ æ [{id, title, source, category, tags, summary, link, savedAt, status}]
-  knowledge: [],    // æ–‡åˆ›ç§‘æ™® [{id, title, category, summary, link, savedAt, read}]
-  crossover: [],    // è·¨ç•Œèåˆ [{id, title, industries, summary, link, savedAt, read}]
-  notes: {}         // æ¯æ—¥ç¬”è®° { '2025-07-25': 'å†…å®¹' }
+  inspirations: [], // ÖÖ²İÌû [{id, title, source, category, tags, summary, link, savedAt, status}]
+  knowledge: [],    // ¿ÆÆÕÌû [{id, title, category, summary, link, savedAt, read}]
+  franchises: [],   // ¼ÓÃËÌû [{id, brand, investAmount, model, contact, source, tags, summary, link, savedAt, status}]
+  fitness: [],      // ½¡Éí´ò¿¨ [{id, date, type, duration, intensity, note, createdAt}]
+  reading: [],      // ÔÄ¶Á´ò¿¨ [{id, date, bookTitle, author, duration, pages, excerpt, createdAt}]
+  accountLogs: [],  // ¶¶ÒôÕËºÅ [{id, date, followers, following, posts, likes, note, createdAt}]
+  notes: {}         // Ã¿ÈÕ±Ê¼Ç { '2025-07-25': 'ÄÚÈİ' }
 };
 
-// åˆ†ç±»é…ç½®
 const CATEGORIES = {
   todo: [
-    { value: 'content', label: 'å†…å®¹åˆ›ä½œ', color: '#ff6b6b' },
-    { value: 'research', label: 'é€‰é¢˜è°ƒç ”', color: '#4ecdc4' },
-    { value: 'operation', label: 'è¿è¥æ¨å¹¿', color: '#45b7d1' },
-    { value: 'design', label: 'è®¾è®¡åˆ¶ä½œ', color: '#f9ca24' },
-    { value: 'biz', label: 'å•†åŠ¡å¯¹æ¥', color: '#a55eea' },
-    { value: 'other', label: 'å…¶ä»–', color: '#95a5a6' }
+    { value: 'content', label: 'ÄÚÈİ´´×÷', color: '#d4654a' },
+    { value: 'research', label: 'Ñ¡Ìâµ÷ÑĞ', color: '#4ecdc4' },
+    { value: 'operation', label: 'ÔËÓªÍÆ¹ã', color: '#45b7d1' },
+    { value: 'design', label: 'Éè¼ÆÖÆ×÷', color: '#f9ca24' },
+    { value: 'biz', label: 'ÉÌÎñ¶Ô½Ó', color: '#a55eea' },
+    { value: 'other', label: 'ÆäËû', color: '#95a5a6' }
   ],
   inspiration: [
-    'æ‰‹è´¦æ–‡å…·', 'å›½æ½®æ–‡åˆ›', 'IPè”å', 'éé—æ‰‹ä½œ', 'åšç‰©é¦†æ–‡åˆ›',
-    'æ½®ç©ç›²ç›’', 'æ–‡åˆ›å‘¨è¾¹', 'æ–°ä¸­å¼ç¾å­¦', 'å¤å¤è®¾è®¡', 'å…¶ä»–'
+    'ÊÖÕËÎÄ¾ß', '¹ú³±ÎÄ´´', 'IPÁªÃû', '·ÇÒÅÊÖ×÷', '²©Îï¹İÎÄ´´',
+    '³±ÍæÃ¤ºĞ', 'ÎÄ´´ÖÜ±ß', 'ĞÂÖĞÊ½ÃÀÑ§', '¸´¹ÅÉè¼Æ', 'ÆäËû'
   ],
   knowledge: [
-    'ç‰ˆæƒIP', 'ä¾›åº”é“¾', 'ç§åŸŸè¿è¥', 'çº¿ä¸Šçº¿ä¸‹ä¸€ä½“åŒ–', 'IPå­µåŒ–',
-    'å“ç‰Œç­–ç•¥', 'è´¢åŠ¡ç¨åŠ¡', 'æ”¿ç­–æ‰¶æŒ', 'è¡Œä¸šæŠ¥å‘Š', 'å…¶ä»–'
+    '°æÈ¨IP', '¹©Ó¦Á´', 'Ë½ÓòÔËÓª', 'ÏßÉÏÏßÏÂÒ»Ìå»¯', 'IP·õ»¯',
+    'Æ·ÅÆ²ßÂÔ', '²ÆÎñË°Îñ', 'Õş²ß·ö³Ö', 'ĞĞÒµ±¨¸æ', '¿ç½çÈÚºÏ', 'ÆäËû'
   ],
-  crossover: [
-    'æ–‡åˆ›+å’–å•¡', 'æ–‡åˆ›+ä¹¦åº—', 'æ–‡åˆ›+æ–‡æ—…', 'æ–‡åˆ›+å…¬å›­å•†ä¸š',
-    'æ–‡åˆ›+ç§‘æŠ€', 'æ–‡åˆ›+é¤é¥®', 'æ–‡åˆ›+ç¾å¦†', 'æ–‡åˆ›+æ•™è‚²', 'æ–‡åˆ›+å®¶å±…', 'å…¶ä»–'
-  ]
+  franchise: [
+    'ÎÄ´´¼ÓÃË', 'IPÊÚÈ¨', '´úÀíºÏ×÷', 'Ö±ÓªÃÅµê', '¿ìÉÁµê', 'ÆäËû'
+  ],
+  fitness: ['ÅÜ²½', 'Á¦Á¿ÑµÁ·', 'è¤Ù¤', 'ÓÎÓ¾', 'ÆïĞĞ', 'ÇòÀà', 'ÆäËû'],
+  reading: ['ÎÄ´´Éè¼Æ', '´´ÒµÉÌÒµ', 'ÊĞ³¡ÓªÏú', 'ÎÄÑ§Ğ¡Ëµ', '¸öÈË³É³¤', 'ÆäËû']
 };
 
 const PRIORITY = [
-  { value: 'high', label: 'é«˜', color: '#e74c3c' },
-  { value: 'medium', label: 'ä¸­', color: '#f39c12' },
-  { value: 'low', label: 'ä½', color: '#27ae60' }
+  { value: 'high', label: '¸ß', color: '#c64b4b' },
+  { value: 'medium', label: 'ÖĞ', color: '#d4a93a' },
+  { value: 'low', label: 'µÍ', color: '#5b8c5a' }
+];
+
+const FRANCHISE_STATUS = [
+  { value: 'pending', label: '´ıÁË½â', color: '#d4a93a' },
+  { value: 'contacting', label: 'ÁªÏµÖĞ', color: '#45b7d1' },
+  { value: 'evaluating', label: 'ÆÀ¹ÀÖĞ', color: '#a55eea' },
+  { value: 'passed', label: 'ÒÑ·ÅÆú', color: '#999' }
 ];
 
 class Database {
@@ -56,28 +66,56 @@ class Database {
 
   load() {
     try {
-      const raw = localStorage.getItem(DB_KEY);
-      if (!raw) return JSON.parse(JSON.stringify(DEFAULT_DATA));
-      const data = JSON.parse(raw);
-      // åˆå¹¶ç¼ºå¤±å­—æ®µ
-      return { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...data };
+      // ÏÈ³¢ÊÔ v2
+      const rawV2 = localStorage.getItem(DB_KEY_V2);
+      if (rawV2) {
+        const data = JSON.parse(rawV2);
+        return { ...JSON.parse(JSON.stringify(DEFAULT_DATA)), ...data };
+      }
+      // ¼ì²â v1 Êı¾İ²¢Ç¨ÒÆ
+      const rawV1 = localStorage.getItem(DB_KEY_V1);
+      if (rawV1) {
+        const v1 = JSON.parse(rawV1);
+        const migrated = JSON.parse(JSON.stringify(DEFAULT_DATA));
+        migrated.todos = v1.todos || {};
+        migrated.inspirations = v1.inspirations || [];
+        migrated.knowledge = v1.knowledge || [];
+        // crossover ²¢Èë knowledge
+        if (v1.crossover && v1.crossover.length) {
+          v1.crossover.forEach(c => {
+            migrated.knowledge.push({
+              id: c.id || this.genId(),
+              title: c.title || 'Î´ÃüÃû',
+              category: '¿ç½çÈÚºÏ',
+              summary: c.summary || '',
+              link: c.link || '',
+              savedAt: c.savedAt || new Date().toISOString(),
+              read: c.read || false
+            });
+          });
+        }
+        migrated.notes = v1.notes || {};
+        migrated.meta.migratedFrom = 'v1';
+        migrated.meta.migratedAt = new Date().toISOString();
+        localStorage.setItem(DB_KEY_V2, JSON.stringify(migrated));
+        return migrated;
+      }
+      return JSON.parse(JSON.stringify(DEFAULT_DATA));
     } catch (e) {
-      console.error('æ•°æ®åŠ è½½å¤±è´¥', e);
+      console.error('Êı¾İ¼ÓÔØÊ§°Ü', e);
       return JSON.parse(JSON.stringify(DEFAULT_DATA));
     }
   }
 
   save() {
     this.data.meta.lastUpdate = new Date().toISOString();
-    localStorage.setItem(DB_KEY, JSON.stringify(this.data));
+    localStorage.setItem(DB_KEY_V2, JSON.stringify(this.data));
   }
 
-  // å¯¼å‡ºæ•°æ®
   export() {
     return JSON.stringify(this.data, null, 2);
   }
 
-  // å¯¼å…¥æ•°æ®
   import(jsonStr) {
     try {
       const data = JSON.parse(jsonStr);
@@ -89,13 +127,24 @@ class Database {
     }
   }
 
-  // æ¸…ç©ºæ•°æ®
   reset() {
     this.data = JSON.parse(JSON.stringify(DEFAULT_DATA));
     this.save();
   }
 
-  // ========== å¾…åŠäº‹é¡¹ ==========
+  genId() {
+    return Date.now().toString() + Math.random().toString(36).slice(2, 6);
+  }
+
+  formatDate(d) {
+    const dt = d instanceof Date ? d : new Date(d);
+    const y = dt.getFullYear();
+    const m = String(dt.getMonth() + 1).padStart(2, '0');
+    const day = String(dt.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+
+  // ========== ´ı°ì ==========
   getTodos(date) {
     return this.data.todos[date] || [];
   }
@@ -103,7 +152,7 @@ class Database {
   addTodo(date, todo) {
     if (!this.data.todos[date]) this.data.todos[date] = [];
     const item = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
+      id: this.genId(),
       text: todo.text,
       done: false,
       priority: todo.priority || 'medium',
@@ -133,19 +182,7 @@ class Database {
     this.save();
   }
 
-  // è·å–å¤šä¸ªæ—¥æœŸçš„å¾…åŠï¼ˆç”¨äºçœ‹æ¿è§†å›¾ï¼‰
-  getTodosRange(startDate, endDate) {
-    const result = {};
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const key = this.formatDate(d);
-      result[key] = this.getTodos(key);
-    }
-    return result;
-  }
-
-  // ========== ç§è‰æ–‡ç´ æ ==========
+  // ========== ÖÖ²İÌû ==========
   getInspirations(filter = {}) {
     let list = [...this.data.inspirations];
     if (filter.category) list = list.filter(i => i.category === filter.category);
@@ -163,16 +200,15 @@ class Database {
 
   addInspiration(item) {
     const entry = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
-      title: item.title || 'æœªå‘½å',
-      source: item.source || 'å°çº¢ä¹¦',
-      category: item.category || 'å…¶ä»–',
+      id: this.genId(),
+      title: item.title || 'Î´ÃüÃû',
+      source: item.source || 'Ğ¡ºìÊé',
+      category: item.category || 'ÆäËû',
       tags: item.tags || [],
       summary: item.summary || '',
       link: item.link || '',
-      cover: item.cover || '',
       savedAt: new Date().toISOString(),
-      status: item.status || 'pending' // pending: å¾…äºŒåˆ›, doing: äºŒåˆ›ä¸­, done: å·²å‘å¸ƒ
+      status: item.status || 'pending'
     };
     this.data.inspirations.push(entry);
     this.save();
@@ -194,7 +230,7 @@ class Database {
     this.save();
   }
 
-  // ========== çŸ¥è¯†åº“ ==========
+  // ========== ¿ÆÆÕÌû ==========
   getKnowledge(filter = {}) {
     let list = [...this.data.knowledge];
     if (filter.category) list = list.filter(i => i.category === filter.category);
@@ -210,9 +246,9 @@ class Database {
 
   addKnowledge(item) {
     const entry = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
-      title: item.title || 'æœªå‘½å',
-      category: item.category || 'å…¶ä»–',
+      id: this.genId(),
+      title: item.title || 'Î´ÃüÃû',
+      category: item.category || 'ÆäËû',
       summary: item.summary || '',
       link: item.link || '',
       savedAt: new Date().toISOString(),
@@ -238,51 +274,182 @@ class Database {
     this.save();
   }
 
-  // ========== è·¨ç•Œèåˆ ==========
-  getCrossover(filter = {}) {
-    let list = [...this.data.crossover];
+  // ========== ¼ÓÃËÌû ==========
+  getFranchises(filter = {}) {
+    let list = [...this.data.franchises];
     if (filter.category) list = list.filter(i => i.category === filter.category);
+    if (filter.status) list = list.filter(i => i.status === filter.status);
     if (filter.keyword) {
       const kw = filter.keyword.toLowerCase();
       list = list.filter(i =>
-        (i.title || '').toLowerCase().includes(kw) ||
-        (i.summary || '').toLowerCase().includes(kw)
+        (i.brand || '').toLowerCase().includes(kw) ||
+        (i.summary || '').toLowerCase().includes(kw) ||
+        (i.tags || []).some(t => t.toLowerCase().includes(kw))
       );
     }
     return list.sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
   }
 
-  addCrossover(item) {
+  addFranchise(item) {
     const entry = {
-      id: Date.now().toString() + Math.random().toString(36).slice(2, 6),
-      title: item.title || 'æœªå‘½å',
-      category: item.category || 'å…¶ä»–',
+      id: this.genId(),
+      brand: item.brand || 'Î´ÃüÃû',
+      investAmount: item.investAmount || '',
+      model: item.model || '',
+      contact: item.contact || '',
+      source: item.source || 'Ğ¡ºìÊé',
+      category: item.category || 'ÎÄ´´¼ÓÃË',
+      tags: item.tags || [],
       summary: item.summary || '',
       link: item.link || '',
       savedAt: new Date().toISOString(),
-      read: false
+      status: item.status || 'pending'
     };
-    this.data.crossover.push(entry);
+    this.data.franchises.push(entry);
     this.save();
     return entry;
   }
 
-  updateCrossover(id, updates) {
-    const idx = this.data.crossover.findIndex(i => i.id === id);
+  updateFranchise(id, updates) {
+    const idx = this.data.franchises.findIndex(i => i.id === id);
     if (idx >= 0) {
-      this.data.crossover[idx] = { ...this.data.crossover[idx], ...updates };
+      this.data.franchises[idx] = { ...this.data.franchises[idx], ...updates };
       this.save();
-      return this.data.crossover[idx];
+      return this.data.franchises[idx];
     }
     return null;
   }
 
-  deleteCrossover(id) {
-    this.data.crossover = this.data.crossover.filter(i => i.id !== id);
+  deleteFranchise(id) {
+    this.data.franchises = this.data.franchises.filter(i => i.id !== id);
     this.save();
   }
 
-  // ========== æ¯æ—¥ç¬”è®° ==========
+  // ========== ½¡Éí´ò¿¨ ==========
+  getFitness(date) {
+    return this.data.fitness.filter(f => f.date === date);
+  }
+
+  getAllFitness() {
+    return [...this.data.fitness].sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  addFitness(item) {
+    const entry = {
+      id: this.genId(),
+      date: item.date,
+      type: item.type || 'ÆäËû',
+      duration: item.duration || 0,
+      intensity: item.intensity || 3,
+      note: item.note || '',
+      createdAt: new Date().toISOString()
+    };
+    this.data.fitness.push(entry);
+    this.save();
+    return entry;
+  }
+
+  deleteFitness(id) {
+    this.data.fitness = this.data.fitness.filter(f => f.id !== id);
+    this.save();
+  }
+
+  // ========== ÔÄ¶Á´ò¿¨ ==========
+  getReading(date) {
+    return this.data.reading.filter(r => r.date === date);
+  }
+
+  getAllReading() {
+    return [...this.data.reading].sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  addReading(item) {
+    const entry = {
+      id: this.genId(),
+      date: item.date,
+      bookTitle: item.bookTitle || '',
+      author: item.author || '',
+      duration: item.duration || 0,
+      pages: item.pages || 0,
+      excerpt: item.excerpt || '',
+      createdAt: new Date().toISOString()
+    };
+    this.data.reading.push(entry);
+    this.save();
+    return entry;
+  }
+
+  deleteReading(id) {
+    this.data.reading = this.data.reading.filter(r => r.id !== id);
+    this.save();
+  }
+
+  // ========== Á¬Ğø´ò¿¨ÌìÊı ==========
+  getStreak(type) {
+    // type = 'fitness' | 'reading'
+    const records = this.data[type] || [];
+    const dateSet = new Set(records.map(r => r.date));
+    let streak = 0;
+    const d = new Date();
+    // Èç¹û½ñÌìÃ»´ò¿¨£¬´Ó×òÌì¿ªÊ¼Ëã£¨ÔÊĞí½ñÌì»¹Ã»´ò¿¨£©
+    if (!dateSet.has(this.formatDate(d))) {
+      d.setDate(d.getDate() - 1);
+    }
+    while (dateSet.has(this.formatDate(d))) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }
+
+  // ========== ¶¶ÒôÕËºÅ ==========
+  getLatestAccount() {
+    if (!this.data.accountLogs.length) return null;
+    return [...this.data.accountLogs].sort((a, b) => b.date.localeCompare(a.date))[0];
+  }
+
+  getAccountHistory(days = 30) {
+    const sorted = [...this.data.accountLogs].sort((a, b) => b.date.localeCompare(a.date));
+    return sorted.slice(0, days);
+  }
+
+  addAccountLog(item) {
+    const entry = {
+      id: this.genId(),
+      date: item.date || this.formatDate(new Date()),
+      followers: item.followers || 0,
+      following: item.following || 0,
+      posts: item.posts || 0,
+      likes: item.likes || 0,
+      note: item.note || '',
+      createdAt: new Date().toISOString()
+    };
+    this.data.accountLogs.push(entry);
+    this.save();
+    return entry;
+  }
+
+  deleteAccountLog(id) {
+    this.data.accountLogs = this.data.accountLogs.filter(a => a.id !== id);
+    this.save();
+  }
+
+  getAccountStreak() {
+    const logs = this.data.accountLogs;
+    const dateSet = new Set(logs.map(l => l.date));
+    let streak = 0;
+    const d = new Date();
+    if (!dateSet.has(this.formatDate(d))) {
+      d.setDate(d.getDate() - 1);
+    }
+    while (dateSet.has(this.formatDate(d))) {
+      streak++;
+      d.setDate(d.getDate() - 1);
+    }
+    return streak;
+  }
+
+  // ========== ±Ê¼Ç ==========
   getNote(date) {
     return this.data.notes[date] || '';
   }
@@ -296,52 +463,44 @@ class Database {
     this.save();
   }
 
-  // ========== å·¥å…·æ–¹æ³• ==========
-  formatDate(d) {
-    const dt = d instanceof Date ? d : new Date(d);
-    const y = dt.getFullYear();
-    const m = String(dt.getMonth() + 1).padStart(2, '0');
-    const day = String(dt.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  }
-
-  // ç»Ÿè®¡
+  // ========== Í³¼Æ ==========
   getStats() {
     const today = this.formatDate(new Date());
     const todayTodos = this.getTodos(today);
     return {
       todayTotal: todayTodos.length,
       todayDone: todayTodos.filter(t => t.done).length,
+      fitnessStreak: this.getStreak('fitness'),
+      readingStreak: this.getStreak('reading'),
       inspirations: this.data.inspirations.length,
-      inspirationsPending: this.data.inspirations.filter(i => i.status === 'pending').length,
       knowledge: this.data.knowledge.length,
-      crossover: this.data.crossover.length,
-      notes: Object.keys(this.data.notes).length
+      franchises: this.data.franchises.length,
+      accountStreak: this.getAccountStreak()
     };
   }
 }
 
-// é¢„å¡«çš„ç¤ºä¾‹å†…å®¹ - å¸®åŠ©ç”¨æˆ·å¿«é€Ÿä¸Šæ‰‹
+// Ô¤ÌîÊ¾ÀıÊı¾İ
 const SEED_DATA = {
   inspirations: [
     {
       id: 'seed-insp-1',
-      title: 'æ•…å®«æ–‡åˆ›å†°ç®±è´´åˆå‡ºçˆ†æ¬¾äº†ï¼è¿™æ¬¡æ˜¯è„Šå…½ç³»åˆ—',
-      source: 'å°çº¢ä¹¦',
-      category: 'åšç‰©é¦†æ–‡åˆ›',
-      tags: ['æ•…å®«', 'å†°ç®±è´´', 'è„Šå…½', 'çˆ†æ¬¾'],
-      summary: 'æ•…å®«æ–°å‡ºçš„è„Šå…½ç³»åˆ—å†°ç®±è´´ï¼Œå°†å¤å»ºç­‘å±‹è„Šä¸Šçš„ç¥å…½åšæˆè¿·ä½ ç«‹ä½“é€ å‹ï¼Œå•ä»·39-59å…ƒï¼Œä¸Šå¸‚ä¸¤å‘¨é”€é‡ç ´ä¸‡ã€‚å°é¢ç”¨äº§å“ç‰¹å†™+æ•…å®«çº¢å¢™èƒŒæ™¯ï¼Œæ ‡é¢˜ç”¨"ç»ˆäºé›†é½äº†ï¼"åˆ¶é€ æ”¶é›†æ¬²ã€‚è¿™ç§"ç³»åˆ—åŒ–+æ”¶é›†å‘+æ–‡åŒ–IP"çš„å¥—è·¯å¾ˆé€‚åˆæ–‡åˆ›äºŒåˆ›å‚è€ƒã€‚',
+      title: '¹Ê¹¬ÎÄ´´±ùÏäÌùÓÖ³ö±¬¿îÁË£¡Õâ´ÎÊÇ¼¹ÊŞÏµÁĞ',
+      source: 'Ğ¡ºìÊé',
+      category: '²©Îï¹İÎÄ´´',
+      tags: ['¹Ê¹¬', '±ùÏäÌù', '¼¹ÊŞ'],
+      summary: '¹Ê¹¬ĞÂ³öµÄ¼¹ÊŞÏµÁĞ±ùÏäÌù£¬½«¹Å½¨ÖşÎİ¼¹ÉÏµÄÉñÊŞ×ö³ÉÃÔÄãÁ¢ÌåÔìĞÍ£¬µ¥¼Û39-59Ôª£¬ÉÏÊĞÁ½ÖÜÏúÁ¿ÆÆÍò¡£"ÏµÁĞ»¯+ÊÕ¼¯Ïò+ÎÄ»¯IP"µÄÌ×Â·ÊÊºÏÎÄ´´¶ş´´²Î¿¼¡£',
       link: '',
       savedAt: new Date().toISOString(),
       status: 'pending'
     },
     {
       id: 'seed-insp-2',
-      title: 'æ¼†æ‰‡DIYä½“éªŒï½œéé—ä¹Ÿèƒ½è¿™ä¹ˆæ½®',
-      source: 'å°çº¢ä¹¦',
-      category: 'éé—æ‰‹ä½œ',
-      tags: ['æ¼†æ‰‡', 'éé—', 'DIY', 'ä½“éªŒ'],
-      summary: 'å¤§æ¼†å·¥è‰ºåšçš„æ‰‡å­ï¼Œæ¯æŠŠçº¹ç†ç‹¬ä¸€æ— äºŒï¼Œå•ä»·68-128å…ƒã€‚åšä¸»ç”¨æ²‰æµ¸å¼åˆ¶ä½œè¿‡ç¨‹è§†é¢‘+æˆå“å±•ç¤ºï¼Œå¼ºè°ƒ"ç‹¬ä¸€æ— äºŒ"å’Œ"äº²æ‰‹åš"çš„æƒ…ç»ªä»·å€¼ã€‚éé—+ä½“éªŒç»æµæ˜¯å½“å‰æ–‡åˆ›çƒ­é—¨æ–¹å‘ï¼Œå¯å‚è€ƒå…¶"è¿‡ç¨‹å³å†…å®¹"çš„ç§è‰é€»è¾‘ã€‚',
+      title: 'ÆáÉÈDIYÌåÑé£ü·ÇÒÅÒ²ÄÜÕâÃ´³±',
+      source: 'Ğ¡ºìÊé',
+      category: '·ÇÒÅÊÖ×÷',
+      tags: ['ÆáÉÈ', '·ÇÒÅ', 'DIY'],
+      summary: '´óÆá¹¤ÒÕ×öµÄÉÈ×Ó£¬Ã¿°ÑÎÆÀí¶ÀÒ»ÎŞ¶ş£¬µ¥¼Û68-128Ôª¡£²©Ö÷ÓÃ³Á½şÊ½ÖÆ×÷¹ı³ÌÊÓÆµ+³ÉÆ·Õ¹Ê¾£¬Ç¿µ÷"¶ÀÒ»ÎŞ¶ş"µÄÇéĞ÷¼ÛÖµ¡£·ÇÒÅ+ÌåÑé¾­¼ÃÊÇµ±Ç°ÈÈÃÅ·½Ïò¡£',
       link: '',
       savedAt: new Date(Date.now() - 86400000).toISOString(),
       status: 'pending'
@@ -350,46 +509,41 @@ const SEED_DATA = {
   knowledge: [
     {
       id: 'seed-know-1',
-      title: 'æ–‡åˆ›åˆ›ä¸šå¿…è¯»ï¼šè‘—ä½œæƒç™»è®°ä¸IPæˆæƒé¿å‘æŒ‡å—',
-      category: 'ç‰ˆæƒIP',
-      summary: 'æ–‡åˆ›äº§å“çš„æ ¸å¿ƒèµ„äº§æ˜¯ç‰ˆæƒã€‚åŸåˆ›è®¾è®¡éœ€åŠæ—¶åšè‘—ä½œæƒç™»è®°ï¼ˆè´¹ç”¨ä½ã€å‘¨æœŸçŸ­ï¼‰ï¼Œå•†æ ‡æ³¨å†Œè¦è¦†ç›–æ ¸å¿ƒå“ç±»ã€‚IPæˆæƒæ—¶åŠ¡å¿…æ˜ç¡®ä½¿ç”¨èŒƒå›´ã€æœŸé™ã€åˆ†æˆæ–¹å¼ï¼Œè­¦æƒ•"ä¹°æ–­å¼"æ¡æ¬¾ã€‚å»ºè®®æ—©æœŸå°±æ‰¾ä¸“ä¸šçŸ¥äº§å¾‹å¸ˆæŠŠå…³åˆåŒã€‚',
+      title: 'ÎÄ´´´´Òµ±Ø¶Á£ºÖø×÷È¨µÇ¼ÇÓëIPÊÚÈ¨±Ü¿ÓÖ¸ÄÏ',
+      category: '°æÈ¨IP',
+      summary: 'ÎÄ´´²úÆ·µÄºËĞÄ×Ê²úÊÇ°æÈ¨¡£Ô­´´Éè¼ÆĞè¼°Ê±×öÖø×÷È¨µÇ¼Ç£¬ÉÌ±ê×¢²áÒª¸²¸ÇºËĞÄÆ·Àà¡£IPÊÚÈ¨Ê±Îñ±ØÃ÷È·Ê¹ÓÃ·¶Î§¡¢ÆÚÏŞ¡¢·Ö³É·½Ê½£¬¾¯Ìè"Âò¶ÏÊ½"Ìõ¿î¡£',
       link: '',
       savedAt: new Date().toISOString(),
       read: false
     },
     {
       id: 'seed-know-2',
-      title: 'å°æ‰¹é‡ç”Ÿäº§æ€ä¹ˆæ‰¾ä»£å·¥å‚ï¼Ÿæ–‡åˆ›ä¾›åº”é“¾å…¥é—¨',
-      category: 'ä¾›åº”é“¾',
-      summary: 'æ–‡åˆ›èµ·æ­¥é€šå¸¸æ˜¯å°æ‰¹é‡ï¼ˆ100-500ä»¶ï¼‰ï¼Œæ‰¾å¤§å‚ä¸æ¥å•ï¼Œæ‰¾å°å‚å“è´¨ä¸ç¨³ã€‚å»ºè®®ï¼š1ï¼‰1688ç­›é€‰"å°å•å¿«å"æ ‡ç­¾å·¥å‚ï¼›2ï¼‰å…ˆæ‰“æ ·ç¡®è®¤å·¥è‰ºå†ä¸‹å•ï¼›3ï¼‰é¦–æ‰¹æ§åˆ¶åœ¨300ä»¶å†…è¯•æ°´ï¼›4ï¼‰å»ºç«‹å“æ§æ ‡å‡†æ–‡æ¡£ï¼Œæ¯æ¬¡å‡ºè´§å¯¹ç…§æ£€æŸ¥ã€‚',
+      title: 'Ğ¡ÅúÁ¿Éú²úÔõÃ´ÕÒ´ú¹¤³§£¿ÎÄ´´¹©Ó¦Á´ÈëÃÅ',
+      category: '¹©Ó¦Á´',
+      summary: 'ÎÄ´´Æğ²½Í¨³£ÊÇĞ¡ÅúÁ¿£¨100-500¼ş£©¡£½¨Òé£º1£©1688É¸Ñ¡"Ğ¡µ¥¿ì·´"¹¤³§£»2£©ÏÈ´òÑùÈ·ÈÏ¹¤ÒÕ£»3£©Ê×Åú¿ØÖÆÔÚ300¼şÄÚÊÔË®£»4£©½¨Á¢Æ·¿Ø±ê×¼ÎÄµµ¡£',
       link: '',
       savedAt: new Date(Date.now() - 86400000).toISOString(),
       read: false
     }
   ],
-  crossover: [
+  franchises: [
     {
-      id: 'seed-cross-1',
-      title: 'æ¡ˆä¾‹æ‹†è§£ï¼šä¸€å®¶"æ–‡åˆ›+å’–å•¡"åº—å¦‚ä½•åšåˆ°æœˆæµæ°´30ä¸‡',
-      category: 'æ–‡åˆ›+å’–å•¡',
-      summary: 'ä¸Šæµ·æŸæ–‡åˆ›å’–å•¡åº—ï¼Œæ ¸å¿ƒæ¨¡å¼æ˜¯"å’–å•¡å¼•æµ+æ–‡åˆ›å˜ç°"ã€‚å’–å•¡å®šä»·28-38å…ƒèµ°é‡ï¼Œåº—å†…æ–‡åˆ›å‘¨è¾¹ï¼ˆæ˜ä¿¡ç‰‡ã€è´´çº¸ã€æ‰‹ä½œï¼‰å®¢å•ä»·60-120å…ƒï¼Œæ–‡åˆ›åˆ©æ¶¦å æ¯”65%ã€‚å…³é”®åŠ¨ä½œï¼š1ï¼‰æ¯æœˆä¸€ä¸ªä¸»é¢˜ç­–å±•ï¼›2ï¼‰å’–å•¡æ¯å¥—æœ¬èº«å°±æ˜¯æ–‡åˆ›äº§å“ï¼›3ï¼‰æ‰“å¡å¢™è®¾è®¡å¼•å¯¼UGCä¼ æ’­ã€‚',
+      id: 'seed-fr-1',
+      brand: 'Ä³ÎÄ´´¼¯ºÏµêÆ·ÅÆ',
+      investAmount: '10-30Íò',
+      model: '¼ÓÃË',
+      contact: 'Ğ¡ºìÊéË½ĞÅ',
+      source: 'Ğ¡ºìÊé',
+      category: 'ÎÄ´´¼ÓÃË',
+      tags: ['¼¯ºÏµê', '¼ÓÃË'],
+      summary: 'Ö÷´ò¹ú³±ÎÄ´´¼¯ºÏ£¬È«¹úÒÑ¿ª50+µê¡£¼ÓÃË·Ñ5Íò£¬Ê×Åú½ø»õ8Íò£¬ÃÅµêÒªÇó30Æ½ÒÔÉÏ¡£ĞèÖØµã¿¼²ì£ºÑ¡Æ·ÄÜÁ¦¡¢¹©Ó¦Á´ÎÈ¶¨ĞÔ¡¢ÇøÓò±£»¤Õş²ß¡£',
       link: '',
       savedAt: new Date().toISOString(),
-      read: false
-    },
-    {
-      id: 'seed-cross-2',
-      title: 'åšç‰©é¦†IPç»æµï¼šå•åº—å¹´å­µåŒ–100æ¬¾ç™¾ä¸‡çº§æ–°å“',
-      category: 'æ–‡åˆ›+æ–‡æ—…',
-      summary: 'åšç‰©é¦†æ–‡åˆ›å·²ä»"çºªå¿µå“"å‡çº§ä¸º"IPç»æµ"ã€‚æŸçœçº§åšç‰©é¦†é€šè¿‡"é¦†è—å…ƒç´ æå–â†’è®¾è®¡å¸ˆå…±åˆ›â†’å°æ‰¹é‡è¯•é”€â†’çˆ†æ¬¾æ”¾å¤§"çš„é“¾è·¯ï¼Œä¸€å¹´å­µåŒ–100+æ¬¾ç™¾ä¸‡çº§å•å“ã€‚æ ¸å¿ƒæ˜¯å»ºç«‹IPç´ æåº“+è®¾è®¡å¸ˆå…¥é©»æœºåˆ¶ï¼Œé™ä½å•å“å¼€å‘æˆæœ¬ã€‚',
-      link: '',
-      savedAt: new Date(Date.now() - 86400000).toISOString(),
-      read: false
+      status: 'pending'
     }
   ]
 };
 
-// åˆå§‹åŒ–æ—¶æ³¨å…¥ç§å­æ•°æ®ï¼ˆä»…é¦–æ¬¡ï¼‰
 function seedDataIfEmpty(db) {
   if (db.data.inspirations.length === 0) {
     db.data.inspirations = JSON.parse(JSON.stringify(SEED_DATA.inspirations));
@@ -397,8 +551,8 @@ function seedDataIfEmpty(db) {
   if (db.data.knowledge.length === 0) {
     db.data.knowledge = JSON.parse(JSON.stringify(SEED_DATA.knowledge));
   }
-  if (db.data.crossover.length === 0) {
-    db.data.crossover = JSON.parse(JSON.stringify(SEED_DATA.crossover));
+  if (db.data.franchises.length === 0) {
+    db.data.franchises = JSON.parse(JSON.stringify(SEED_DATA.franchises));
   }
   db.save();
 }
